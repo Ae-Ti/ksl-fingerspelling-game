@@ -1,0 +1,22 @@
+/* 페이지에서 쓰는 글자만 남긴 글꼴(tools/subset-fonts.py로 생성). 원본: google/fonts, SIL OFL 1.1 (fonts/OFL-*.txt) */
+@font-face {
+  font-family: 'Black Han Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../fonts/black-han-sans.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Gothic A1';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../fonts/gothic-a1-400.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Gothic A1';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(../fonts/gothic-a1-600.woff2) format('woff2');
+}

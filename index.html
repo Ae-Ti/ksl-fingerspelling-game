@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>지문자 자음 맞히기 | 한국수어 웹캠 게임</title>
+  <meta name="description" content="웹캠 앞에서 한국수어 지문자로 자음 14개를 만들어 맞히는 브라우저 게임. 영상은 브라우저 안에서만 처리합니다.">
+  <meta name="theme-color" content="#1C2240">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231C2240'/%3E%3Cpath d='M16 18h30v30' fill='none' stroke='%23F2A900' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1 class="brand">지문자 자음 맞히기</h1>
+    <nav class="modes" aria-label="게임 모드">
+      <button type="button" class="mode" data-mode="practice" aria-pressed="true">연습</button>
+      <button type="button" class="mode" data-mode="attack" aria-pressed="false">60초 도전</button>
+      <button type="button" class="mode" data-mode="record" aria-pressed="false">기준 만들기</button>
+    </nav>
+    <button type="button" class="quiet" id="sound-btn" aria-pressed="true">소리 켬</button>
+  </header>
+
+  <main class="layout">
+    <section class="stage" id="stage" aria-label="카메라 화면">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="stage-cover" id="stage-cover">
+        <div class="stage-letters" aria-hidden="true"><span>ㄱ</span><span>ㄴ</span><span>ㄷ</span><span>ㄹ</span><span>ㅁ</span><span>ㅂ</span><span>ㅅ</span><span>ㅇ</span><span>ㅈ</span><span>ㅊ</span><span>ㅋ</span><span>ㅌ</span><span>ㅍ</span><span>ㅎ</span></div>
+        <p id="stage-text">카메라를 켜면 손을 따라 관절이 그려져요.</p>
+        <button type="button" class="primary" id="camera-btn">카메라 켜기</button>
+      </div>
+      <div class="countdown" id="countdown" aria-live="assertive"></div>
+      <p class="stage-hint" id="stage-hint" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-label="게임">
+      <div class="card" id="card">
+        <div class="card-glyph">
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-track" cx="60" cy="60" r="54"></circle>
+            <circle class="ring-fill" id="ring" cx="60" cy="60" r="54"></circle>
+          </svg>
+          <div class="glyph" id="glyph" aria-live="polite">ㄱ</div>
+          <div class="stamp" id="stamp" aria-hidden="true"><span id="stamp-text">정답</span></div>
+        </div>
+        <div class="card-side">
+          <p class="glyph-name" id="glyph-name">기역</p>
+          <canvas class="hint" id="hint" width="120" height="120" aria-label="기준 손모양 그림"></canvas>
+          <p class="hint-caption" id="hint-caption"></p>
+          <a class="dict" id="dict-link" href="https://sldict.korean.go.kr/" target="_blank" rel="noopener">한국수어사전에서 보기</a>
+        </div>
+        <p class="card-note" id="card-note" aria-live="polite"></p>
+      </div>
+
+      <div class="mode-panel" data-panel="practice">
+        <p class="lead" id="practice-lead"></p>
+        <div class="guesses" id="guesses"></div>
+        <div class="typed">
+          <span class="typed-label">인식한 자음</span>
+          <output id="typed"></output>
+          <button type="button" class="link" id="typed-clear">지우기</button>
+        </div>
+      </div>
+
+      <div class="mode-panel" data-panel="attack" hidden>
+        <div id="attack-ready">
+          <p class="lead">60초 동안 나오는 자음을 손으로 만들어 보세요. 손모양을 잠깐 유지하면 정답이에요. 막히면 건너뛰기(스페이스 바)를 누르세요.</p>
+          <button type="button" class="primary" id="attack-start">시작</button>
+          <p class="best" id="best"></p>
+        </div>
+        <div id="attack-live" hidden>
+          <div class="timer" aria-hidden="true"><div class="timer-fill" id="timer-fill"></div></div>
+          <dl class="stats">
+            <div><dt>점수</dt><dd id="score">0</dd></div>
+            <div><dt>연속 정답</dt><dd id="combo">0</dd></div>
+            <div><dt>남은 시간</dt><dd id="time-left">60</dd></div>
+          </dl>
+          <button type="button" id="attack-skip">건너뛰기</button>
+        </div>
+        <div id="attack-result" hidden>
+          <p class="final"><span id="final-score">0</span>점</p>
+          <dl class="stats">
+            <div><dt>맞힌 자음</dt><dd id="final-correct">0</dd></div>
+            <div><dt>최대 연속</dt><dd id="final-combo">0</dd></div>
+            <div><dt>평균 시간</dt><dd id="final-time">-</dd></div>
+          </dl>
+          <p class="result-note" id="result-note"></p>
+          <button type="button" class="primary" id="attack-again">다시 하기</button>
+        </div>
+      </div>
+
+      <div class="mode-panel" data-panel="record" hidden>
+        <ol class="steps">
+          <li>아래에서 자음을 고르고 한국수어사전에서 손모양을 확인해요.</li>
+          <li>녹화를 누르면 3초 뒤부터 2초 동안 손모양을 기록해요. 그동안 손을 조금씩 기울이면 인식이 더 잘 돼요.</li>
+          <li>자음마다 손 각도를 조금 바꿔 두 번씩 녹화해요.</li>
+        </ol>
+        <div class="row">
+          <button type="button" class="primary" id="record-btn">녹화</button>
+          <button type="button" id="record-clear">이 자음 지우기</button>
+        </div>
+        <p class="record-status" id="record-status"></p>
+        <div class="check">
+          <button type="button" id="check-btn">기준 점검</button>
+          <div class="check-result" id="check-result"></div>
+        </div>
+        <div class="row files">
+          <button type="button" id="export-btn">기준 파일 저장</button>
+          <label class="button" for="import-input">기준 파일 불러오기</label>
+          <input type="file" id="import-input" accept="application/json,.json" hidden>
+          <button type="button" class="link danger" id="clear-all">내 기준 모두 지우기</button>
+        </div>
+        <p class="note" id="default-note"></p>
+      </div>
+    </section>
+
+    <nav class="letters" aria-label="자음 고르기">
+      <ul id="letters"></ul>
+    </nav>
+  </main>
+
+  <footer class="foot">
+    <p>영상은 이 브라우저 안에서만 처리하고 어디에도 저장하거나 보내지 않아요. 직접 녹화한 기준 손모양도 이 브라우저에만 저장돼요.</p>
+    <p>손 인식은 Google MediaPipe Hand Landmarker를 썼고, 손모양은 <a href="https://sldict.korean.go.kr/" target="_blank" rel="noopener">국립국어원 한국수어사전</a>을 참고해 녹화했어요. <a id="repo-link" href="https://github.com/Ae-Ti" target="_blank" rel="noopener">만든 과정과 코드 보기</a></p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
