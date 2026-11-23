@@ -102,9 +102,10 @@ function cameraErrorText(err) {
   if (err?.kind === 'model') return '손 인식 모델을 불러오지 못했어요. 인터넷 연결을 확인한 뒤 다시 눌러 주세요.';
   if (err?.name === 'NotAllowedError') return '카메라 권한이 막혀 있어요. 주소창의 카메라 아이콘에서 허용한 뒤 다시 눌러 주세요.';
   if (err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError') return '카메라를 찾지 못했어요. 카메라를 연결한 뒤 다시 눌러 주세요.';
-  if (err?.name === 'NotReadableError') return '다른 프로그램이 카메라를 쓰고 있어요. 그 프로그램을 닫고 다시 눌러 주세요.';
+  if (err?.name === 'NotReadableError' || err?.name === 'AbortError')
+    return '카메라가 응답하지 않아요. Zoom·FaceTime처럼 카메라를 쓰는 프로그램을 닫고, 그래도 안 되면 Chrome을 완전히 종료했다가 다시 열어 주세요.';
   if (!navigator.mediaDevices) return '이 브라우저에서는 카메라를 쓸 수 없어요. 최신 Chrome이나 Safari로 열어 주세요.';
-  return '카메라를 켜지 못했어요. 페이지를 새로고침한 뒤 다시 눌러 주세요.';
+  return `카메라를 켜지 못했어요(${err?.name || '알 수 없는 오류'}). 페이지를 새로고침한 뒤 다시 눌러 주세요.`;
 }
 
 function fitStageToVideo() {

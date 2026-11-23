@@ -27,13 +27,25 @@ export async function loadLandmarker() {
 }
 
 export async function startCamera(video) {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-    audio: false,
-  });
-  video.srcObject = stream;
-  await video.play();
-  return stream;
+  // 원하는 해상도로 먼저 시도하고, 안 되면 조건 없이 다시 시도한다(카메라마다 지원하는 조건이 다르다)
+  const attempts = [
+    { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+    { video: true, audio: false },
+  ];
+  let lastError;
+  for (const constraints of attempts) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+      return stream;
+    } catch (err) {
+      lastError = err;
+      console.warn('카메라 켜기 실패', constraints, err);
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') break; // 권한 문제는 다시 해도 같다
+    }
+  }
+  throw lastError;
 }
 
 /**
